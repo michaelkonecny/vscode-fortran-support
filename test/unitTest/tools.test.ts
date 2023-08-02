@@ -1,7 +1,9 @@
-import * as path from 'path';
 import * as assert from 'assert';
+import * as path from 'path';
+
 import { Uri } from 'vscode';
-import { shellTask, spawnAsPromise, pathRelToAbs } from '../../src/lib/tools';
+
+import { shellTask, spawnAsPromise, pathRelToAbs } from '../../src/util/tools';
 
 suite('Tools tests', () => {
   test('shellTask returns correct output', async () => {
@@ -16,7 +18,7 @@ suite('Tools tests', () => {
 
   test('shellTask returns rejected promise', async () => {
     const name = 'pip: fortls';
-    assert.rejects(shellTask('python3', ['-m', 'pip', 'install', 'fortls2'], name));
+    await assert.rejects(shellTask('python3', ['-m', 'pip', 'install', 'fortls2'], name));
   });
 
   test('spawnAsPromise correct stdout, stderr output exit code 0', async () => {

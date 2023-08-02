@@ -1,16 +1,26 @@
 'use strict';
 
+import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as cp from 'child_process';
-import which from 'which';
+
+import { glob } from 'glob';
 import * as semver from 'semver';
 import * as vscode from 'vscode';
-import { glob } from 'glob';
+import which from 'which';
 
 import * as pkg from '../../package.json';
+import {
+  BuildDebug,
+  BuildRun,
+  InitLint,
+  CleanLintFiles,
+  RescanLint,
+  CleanLintDiagnostics,
+} from '../commands/commands';
 import { Logger } from '../services/logging';
-import { GNULinter, GNUModernLinter, IntelLinter, LFortranLinter, NAGLinter } from '../lib/linters';
+import { GlobPaths } from '../util/glob-paths';
+import { arraysEqual } from '../util/helper';
 import {
   EXTENSION_ID,
   resolveVariables,
@@ -19,17 +29,9 @@ import {
   spawnAsPromise,
   isFortran,
   shellTask,
-} from '../lib/tools';
-import { arraysEqual } from '../lib/helper';
-import {
-  BuildDebug,
-  BuildRun,
-  InitLint,
-  CleanLintFiles,
-  RescanLint,
-  CleanLintDiagnostics,
-} from './commands';
-import { GlobPaths } from '../lib/glob-paths';
+} from '../util/tools';
+
+import { GNULinter, GNUModernLinter, IntelLinter, LFortranLinter, NAGLinter } from './compilers';
 
 const GNU = new GNULinter();
 const GNU_NEW = new GNUModernLinter();
@@ -465,12 +467,15 @@ export class FortranLintingProvider {
     // const extensionIndex = textDocument.fileName.lastIndexOf('.');
     // const fileNameWithoutExtension = textDocument.fileName.substring(0, extensionIndex);
     const fortranSource: string[] = this.settings.fyppEnabled
-      ? ['-xf95', isFreeForm(textDocument) ? '-ffree-form' : '-ffixed-form', '-']
+      ? ['-xf95', '-']
       : [textDocument.fileName];
 
     const argList = [
       ...args,
       ...this.getIncludeParams(includePaths), // include paths
+      // Explicitly set the type for Fortran in case the user has associated
+      // fixed-form extensions to free-form, or vice versa
+      isFreeForm(textDocument) ? this.linter.freeFlag : this.linter.fixedFlag,
       '-o',
       `${textDocument.fileName}.o`,
       ...fortranSource,
@@ -550,7 +555,9 @@ export class FortranLintingProvider {
     if (this.linter.name === 'gfortran') {
       const ln: number = config.get('fortls.maxLineLength');
       const lnStr: string = ln === -1 ? 'none' : ln.toString();
-      args.push(`-ffree-line-length-${lnStr}`, `-ffixed-line-length-${lnStr}`);
+      // Prepend via `unshift` to make sure user defined flags overwrite
+      // the default ones we provide here.
+      args.unshift(`-ffree-line-length-${lnStr}`, `-ffixed-line-length-${lnStr}`);
     }
     if (args.length > 0) this.logger.debug(`[lint] arguments:`, args);
 

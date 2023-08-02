@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Added syntax highlighting support for `sync` and `event` image control statements
+  ([#874](https://github.com/fortran-lang/vscode-fortran-support/pull/874))
 - Added schema support for fortls configuration files with autocopmletions
   ([#745](https://github.com/fortran-lang/vscode-fortran-support/issues/745))
 - Added Nightly Release Channel for the extension that triggers every day at 00:00 UTC.
@@ -79,6 +81,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+- Fixed bug where specifying `-ffree-line-length-X` and `-ffixed-line-length-X`
+  as `linter.extraArgs` would be overridden by the default behaviour of `fortls`
+  ([#925](https://github.com/fortran-lang/vscode-fortran-support/issues/925))
+- Fixed bug where linter would not use the correct Fortran file association
+  if the extension was part of the default extensions of another Fortran lang ID
+  ([#904](https://github.com/fortran-lang/vscode-fortran-support/issues/904))
 - Fixed linter REGEX for GFortran 4.x.x
   ([#813](https://github.com/fortran-lang/vscode-fortran-support/issues/813))
 - Fixed GFortran version regex to allow for semver + build metadata
